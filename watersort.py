@@ -1,14 +1,15 @@
+import random
 from colorama import init
 from termcolor import colored
 import copy
 init()
 
-POSSIBLE_COLOURS: list = ["BLUE", "RED", "ORANGE", "GREEN", "PURPLE", "YELLOW"]
-CAPACITY: int = 5
+POSSIBLE_COLOURS: list = ["BLUE", "RED", "WHITE", "GREEN", "MAGENTA", "YELLOW"]
+CAPACITY: int = 6
 # test case 1
 
-level = 2
-bnum = 3
+level = 4
+bnum = 5
 
 
 def sorted(bottle)->bool:
@@ -41,14 +42,21 @@ class Node:
       self.idx = Node.count
       Node.count+=1
   def __str__(self) -> str:
-    res = "depth: "+  str(self.depth) +",idx: " + str(self.get_idx()) + '\n'
+    _res = ""
+    for i in range(self.depth):
+      _res+="---"
+    # _res+="*"
+    res =  _res+"depth: "+  str(self.depth) +",idx: " + str(self.get_idx()) + '\n'
     for i in range(len(self.bottles)):
-      res += str(i) + "["
+      res +=_res+ str(i) + "|"
       if len(self.bottles[i]) != 0:
         for j in range(len(self.bottles[i])):
-          res += colored("|",str(self.bottles[i][j]).lower())
-          if j != len(self.bottles[i])-1: res += ","
-      res += "] \n"
+          res += colored("███",str(self.bottles[i][j]).lower())
+          # if j != len(self.bottles[i])-1: res += " "
+      space = ""
+      for i in range(CAPACITY- len(self.bottles[i])):
+        space += "   "
+      res += space + "| \n"
     if allSorted(self.bottles): res += "SORTED------------------------------ \n"
     return res
   def get_bottles(self)->list:
@@ -80,57 +88,71 @@ class Node:
         n += i.node_count()
     return n
 
-  def print_depth(self,depth):
-    res = ""
-    if self.get_depth() == depth:
-      res += self.__str__()
-    if len(self.get_next()) != 0:
-      for i in self.get_next():
-        res += i.print_depth(depth)
-    return res
+  # def print_depth(self,depth):
+  #   res = ""
+  #   if self.get_depth() == depth:
+  #     res += self.__str__()
+  #   if len(self.get_next()) != 0:
+  #     for i in self.get_next():
+  #       res += i.print_depth(depth)
+  #   return res
 
-  def cascade(self,depth)->bool:
-    if self.get_depth() > depth: return
+  def cascade(self,depth)->str:
+    
+    res = self.__str__()
+    if Node.stop: return ""
+    if self.get_depth() > depth: return ""
+    
     if allSorted(self.get_bottles()):
-      return True
-    self.proceed()
+      Node.stop = True
+      return res
+      
+    res += self.proceed()
 
+# this block is for non-random dfs
     if len(self.get_next()) != 0:
       for i in self.get_next():
-        res = i.cascade(depth)
+        if Node.stop: return res
+        res += i.cascade(depth)
+          
+    return res
+
+
+  def cascade_random(self,depth)->str:
+    
+    res = self.__str__()
+    if Node.stop: return ""
+    if self.get_depth() > depth: return ""
+    
+    if allSorted(self.get_bottles()):
+      Node.stop = True
+      return res
+     
+    res += self.proceed()
+
+    if len(self.get_next()) != 0:
+      ar = list(range(len(self.get_next())))
+      for i in range(len(self.get_next())):
+        if Node.stop: return res
+        x = random.choice(ar)
+        ar.remove(x)
+        res += self.get_next()[x].cascade(depth)
         
-    return False
-    # dfs
-  def print_cascade(self):
-    res: str = self.__str__()
-    if allSorted(self.bottles):
-      Node.stop = True
-      return res
-    if len(self.get_next()) != 0:
-      for i in self.get_next():
-        if Node.stop: return res
-        res += i.print_cascade()
-    return res
-  
-    # bfs
-  def print_cascade(self):
-    res: str = self.__str__()
-    if allSorted(self.bottles):
-      Node.stop = True
-      return res
-    if len(self.get_next()) != 0:
-      for i in self.get_next():
-        if Node.stop: return res
-        res += i.print_cascade()
     return res
 
-  # def 
 
   def proceed(self):
-    if allSorted(self.bottles): return
+    res= ""
+    if Node.stop == True: return ""
+    
+    if allSorted(self.bottles): 
+      Node.stop = True
+      return res
+      
     for i in range(len(self.bottles)):
       if len(self.bottles[i]) == 0: continue
       for j in range(i+1,len(self.bottles)):
+
         if len(self.bottles[j]) == 0 or self.bottles[i][-1] == self.bottles[j][-1]:
 
           bottles = copy.deepcopy(self.bottles)
@@ -157,22 +179,30 @@ class Node:
           a = Node(bottles,self.depth+1)
  
           self.add_next(a)
-
+    if len(self.get_next()) == 0: res += '----Stuck'
+    return res
 def main():
 
   b1 = []
   b2 = []
   b3 = []
+  b4 = []
+  b5 = []
   for i in range(level):
-    b1+=[POSSIBLE_COLOURS[i%2]]
-    b2+=[POSSIBLE_COLOURS[i%2]]
+
+    # b2+=[POSSIBLE_COLOURS[i+1%5]]
+    b3+=[POSSIBLE_COLOURS[i+1%5]]
+    b4+=[POSSIBLE_COLOURS[i+1%5]]
+    b5+=[POSSIBLE_COLOURS[i+1%5]]
   
-  root = Node([b1,b2,b3],0)
-  root.cascade(2)
+  if(bnum==3): root = Node([b1,b2,b3],0)
+  elif(bnum==4): root = Node([b1,b2,b3,b4],0)
+  else: root = Node([b1,b2,b3,b4,b5],0)
+  print(root.cascade_random(2))
   # root.proceed()
   # print(root.print_cascade())
-  print(root)
-  print(root.print_cascade())
-  print(root.node_count())
+  # print(root)
+  # print(root.print_cascade())
+  # print(root.node_count())
 if __name__ == '__main__':
     main()

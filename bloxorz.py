@@ -6,8 +6,8 @@ import sys
 import copy
 init()
 
-n=40
-m=40
+n=7
+m=7
 wincheck = [False]
 
 map = [[0 for x in range(n)] for x in range(m)]
@@ -19,13 +19,14 @@ def clear():
     else:
         os.system('clear')  # For Linux System
 
-curr = [7,3,7,3]
-goal = [15,5]
+curr = [1,3,1,3]
+goal = [5,5]
 def initgame():
   wincheck[0] = False
   
   map[goal[0]][goal[1]]= 0
-  erase(curr)
+  map[curr[0]][curr[1]]=0
+  map[curr[2]][curr[3]]=0
   goal[0]=random.randint(0,n-1)
   goal[1]=random.randint(0,m-1)
   
@@ -40,7 +41,7 @@ def initgame():
 
 def erase(curr):
   for i in curr:
-    if i>0 and i <n: continue
+    if i>=0 and i <n: continue
     else: return
   map[curr[0]][curr[1]]=0
   map[curr[2]][curr[3]]=0
@@ -61,13 +62,14 @@ def loadcurr(curr):
 def laprint():
   res = ""
   for i in range(n):
-    res += '\n | '
+    res += '\n '+str(i) + '|' 
     for j in range(m):
 
-      if map[i][j]==0: res += " "
-      if map[i][j]==1: res+= "O"
-      if map[i][j]==2: res+= "X"
-      if map[i][j]==3: res+= colored('X','red','on_yellow')
+      if map[i][j]==0: res += "██"
+      if map[i][j]==1: res+= colored("██",'blue')
+      if map[i][j]==2: res+= colored("██",'magenta')
+      if map[i][j]==3: res+= colored("██",'red','on_yellow')
+    if i == n-1: res+= '\n   0 1 2 3 4 5 6' 
     res += " |"
   print(res)
 
@@ -120,7 +122,7 @@ def makemove(move):
       curr[0]+=1
       curr[2]+=1
   for i in curr:
-    if i>0 and i <n: continue
+    if i>=0 and i <n: continue
     else:
       print("you lose kek")
       initgame()
@@ -136,9 +138,21 @@ def makemove(move):
   print(curr)
 
 
+
 class Node:
-  def __init__(self) -> None:
-    pass
+  stop = False
+  count = 0
+  gameGoal: list = goal
+  def __init__(self, depth, curr) -> None:
+    Node.count+=1
+    self.idx = Node.count
+    self.depth: int = depth
+    self.next: list = []
+    self.curr: list = curr
+
+
+
+
 
 
 def play():
