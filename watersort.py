@@ -8,7 +8,7 @@ POSSIBLE_COLOURS: list = ["BLUE", "RED", "WHITE", "GREEN", "MAGENTA", "YELLOW"]
 CAPACITY: int = 6
 # test case 1
 
-level = 4
+level = 3
 bnum = 5
 
 
@@ -136,7 +136,7 @@ class Node:
         if Node.stop: return res
         x = random.choice(ar)
         ar.remove(x)
-        res += self.get_next()[x].cascade(depth)
+        res += self.get_next()[x].cascade_random(depth)
         
     return res
 
@@ -198,7 +198,8 @@ def main():
   if(bnum==3): root = Node([b1,b2,b3],0)
   elif(bnum==4): root = Node([b1,b2,b3,b4],0)
   else: root = Node([b1,b2,b3,b4,b5],0)
-  print(root.cascade_random(2))
+  print(root.cascade_random(8))
+  # print(root.cascade(5))
   # root.proceed()
   # print(root.print_cascade())
   # print(root)
