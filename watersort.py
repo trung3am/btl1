@@ -8,8 +8,8 @@ POSSIBLE_COLOURS: list = ["BLUE", "RED", "WHITE", "GREEN", "MAGENTA", "YELLOW"]
 CAPACITY: int = 6
 # test case 1
 
-level = 3
-bnum = 5
+level = 4
+bnum = 6
 
 
 def sorted(bottle)->bool:
@@ -31,24 +31,42 @@ def allSorted(bottles)->bool:
       if bottles[i][0] == bottles[j][0]: return False
   return res
 
+def pour(bottles,j,i):
+  while len(bottles[j])==0 or bottles[j][-1] == bottles[i][-1]:
+    bottles[j]+=[bottles[i][-1]]
+    bottles[i] = bottles[i][0:-1]
+    if len(bottles[i]) ==0: break
+
+def heuristicCal(bottles)->int:
+  h = 0
+  for i in bottles:
+    h += max(len(set(i))-1,0)
+  return h
+
+
 class Node:
   count = 1
   stop = False
-  def __init__(self, bottles,depth) -> None:
+  def __init__(self, bottles,depth, parrent) -> None:
+      self.parrent = parrent
       self.bottles: list = bottles
       self.next: list = []
       self.depth: int = depth
       self.isWon: bool = False
       self.idx = Node.count
       Node.count+=1
+      self.heuristic = heuristicCal(self.bottles)
+      self.greed = 0
   def __str__(self) -> str:
     _res = ""
+    tree = ""
     for i in range(self.depth):
       _res+="---"
+      tree+="   "
     # _res+="*"
-    res =  _res+"depth: "+  str(self.depth) +",idx: " + str(self.get_idx()) + '\n'
+    res =  _res+"depth: "+  str(self.depth) +",idx: " + str(self.get_idx()) + "       p_idx"+ str(-1 if self.parrent is None  else self.parrent.idx) + '\n'
     for i in range(len(self.bottles)):
-      res +=_res+ str(i) + "|"
+      res +=tree+ str(i) + "|"
       if len(self.bottles[i]) != 0:
         for j in range(len(self.bottles[i])):
           res += colored("███",str(self.bottles[i][j]).lower())
@@ -80,7 +98,11 @@ class Node:
   def add_next(self, node):
     self.next += [node]
 
-  
+  def antiDetour(self,bottles)->bool:
+    if self.parrent is None: return True
+    if self.parrent.bottles == bottles: return False
+    return self.parrent.antiDetour(bottles)
+
   def node_count(self)->int:
     n = 1 
     if  len(self.get_next()) >= 1:
@@ -97,11 +119,37 @@ class Node:
   #       res += i.print_depth(depth)
   #   return res
 
-  def cascade(self,depth)->str:
+  def AStar(self)->str:
     
     res = self.__str__()
     if Node.stop: return ""
-    if self.get_depth() > depth: return ""
+    
+    
+    if allSorted(self.get_bottles()):
+      Node.stop = True
+      return res
+    res += self.proceed()
+
+
+    if len(self.get_next()) != 0:
+      queue = []
+      idx = []
+      for i in range(len(self.next)):
+        queue += [self.next[i].heuristic +self.next[i].greed]
+        idx += [self.next[i].heuristic +self.next[i].greed]
+      idx.sort()
+      for i in idx:
+        res+= self.next[queue.index(i)].AStar()
+        queue[queue.index(i)] = -1
+        if Node.stop: return res
+
+    return res
+
+  def dfs(self,depth)->str:
+    
+    res = self.__str__()
+    if Node.stop: return ""
+    if self.get_depth() >= depth: return ""
     
     if allSorted(self.get_bottles()):
       Node.stop = True
@@ -113,21 +161,21 @@ class Node:
     if len(self.get_next()) != 0:
       for i in self.get_next():
         if Node.stop: return res
-        res += i.cascade(depth)
+        res += i.dfs(depth)
           
     return res
 
 
-  def cascade_random(self,depth)->str:
+  def dfs_random(self,depth)->str:
     
     res = self.__str__()
     if Node.stop: return ""
-    if self.get_depth() > depth: return ""
+
     
     if allSorted(self.get_bottles()):
       Node.stop = True
       return res
-     
+    if self.get_depth() > depth: return res
     res += self.proceed()
 
     if len(self.get_next()) != 0:
@@ -136,7 +184,7 @@ class Node:
         if Node.stop: return res
         x = random.choice(ar)
         ar.remove(x)
-        res += self.get_next()[x].cascade_random(depth)
+        res += self.get_next()[x].dfs_random(depth)
         
     return res
 
@@ -156,15 +204,14 @@ class Node:
         if len(self.bottles[j]) == 0 or self.bottles[i][-1] == self.bottles[j][-1]:
 
           bottles = copy.deepcopy(self.bottles)
+          pour(bottles,j,i)
+          if self.antiDetour(bottles):
+            a = Node(bottles,self.depth+1,self)
+            if len(self.bottles[j]) != 0: a.greed = 1
+            self.add_next(a)
+            
 
-          bottles[j]+=[bottles[i][-1]]
           
-          bottles[i] = bottles[i][0:-1]
-
-          a = Node(bottles,self.depth+1)
-
-
-          self.add_next(a)
 
     for i in range(len(self.bottles)-1,-1,-1):
       if len(self.bottles[i]) == 0: continue
@@ -172,13 +219,13 @@ class Node:
         if len(self.bottles[j]) == 0 or self.bottles[i][-1] == self.bottles[j][-1]:
 
           bottles = copy.deepcopy(self.bottles)
-          bottles[j]+=[bottles[i][-1]]
+          pour(bottles,j,i)
 
-          bottles[i] = bottles[i][0:-1]
+          if self.antiDetour(bottles):
+            a = Node(bottles,self.depth+1,self)
+            if len(self.bottles[j]) != 0: a.greed = 1
+            self.add_next(a)
 
-          a = Node(bottles,self.depth+1)
- 
-          self.add_next(a)
     if len(self.get_next()) == 0: res += '----Stuck'
     return res
 def main():
@@ -188,22 +235,26 @@ def main():
   b3 = []
   b4 = []
   b5 = []
+  b6 =[]
   for i in range(level):
 
-    # b2+=[POSSIBLE_COLOURS[i+1%5]]
-    b3+=[POSSIBLE_COLOURS[i+1%5]]
-    b4+=[POSSIBLE_COLOURS[i+1%5]]
-    b5+=[POSSIBLE_COLOURS[i+1%5]]
+    b2+=[POSSIBLE_COLOURS[(i+1)%5]]
+    b3+=[POSSIBLE_COLOURS[(i+4)%5]]
+    b4+=[POSSIBLE_COLOURS[(i+3)%5]]
+    b5+=[POSSIBLE_COLOURS[(i+2)%5]]
+    b6+=[POSSIBLE_COLOURS[(i+5)%5]]
   
-  if(bnum==3): root = Node([b1,b2,b3],0)
-  elif(bnum==4): root = Node([b1,b2,b3,b4],0)
-  else: root = Node([b1,b2,b3,b4,b5],0)
-  print(root.cascade_random(8))
-  # print(root.cascade(5))
+  if(bnum==3): root = Node([b1,b2,b3],0,None)
+  elif(bnum==4): root = Node([b1,b2,b3,b4],0,None)
+  elif(bnum==5): root = Node([b1,b2,b3,b4,b5],0,None)
+  else: root = Node([b1,b2,b3,b4,b5,b6],0,None)
+  # print(root.dfs_random(4))
+  # print(root.dfs(100))
+  print(root.AStar())
   # root.proceed()
-  # print(root.print_cascade())
+  # print(root.print_dfs())
   # print(root)
-  # print(root.print_cascade())
-  # print(root.node_count())
+  # print(root.print_dfs())
+  print(root.node_count())
 if __name__ == '__main__':
     main()
