@@ -56,7 +56,7 @@ class Node:
       self.idx = Node.count
       Node.count+=1
       self.heuristic = heuristicCal(self.bottles)
-      self.greed = 0
+      self.uniformCost = 0
   def __str__(self) -> str:
     _res = ""
     tree = ""
@@ -135,8 +135,8 @@ class Node:
       queue = []
       idx = []
       for i in range(len(self.next)):
-        queue += [self.next[i].heuristic +self.next[i].greed]
-        idx += [self.next[i].heuristic +self.next[i].greed]
+        queue += [self.next[i].heuristic +self.next[i].uniformCost]
+        idx += [self.next[i].heuristic +self.next[i].uniformCost]
       idx.sort()
       for i in idx:
         res+= self.next[queue.index(i)].AStar()
@@ -207,7 +207,7 @@ class Node:
           pour(bottles,j,i)
           if self.antiDetour(bottles):
             a = Node(bottles,self.depth+1,self)
-            if len(self.bottles[j]) != 0: a.greed = 1
+            if len(self.bottles[j]) != 0: a.uniformCost = 1
             self.add_next(a)
             
 
@@ -223,7 +223,7 @@ class Node:
 
           if self.antiDetour(bottles):
             a = Node(bottles,self.depth+1,self)
-            if len(self.bottles[j]) != 0: a.greed = 1
+            if len(self.bottles[j]) != 0: a.uniformCost = 1
             self.add_next(a)
 
     if len(self.get_next()) == 0: res += '----Stuck'

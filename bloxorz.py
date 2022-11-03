@@ -4,6 +4,7 @@ from termcolor import colored
 import os
 import sys
 import copy
+import time
 init()
 
 def clear():
@@ -43,6 +44,16 @@ class Game:
       for j in range(len(Game.map)):
         if Game.map[i][j]!=1: Game.map[i][j]=5
         if Game.map[i][j]==5 and i>1 and i < len(Game.map)-2 and j>1 and j < len(Game.map)-2: Game.map[i][j]=0
+
+  @staticmethod
+  def verticalObstacle(start,end, wPos):
+    for i in range(end -start):
+      Game.map[start+i][wPos] = 8
+
+  @staticmethod
+  def HorizontalObstacle(start,end, hPos):
+    for i in range(end -start):
+      Game.map[hPos][start+i] = 8
 
   @staticmethod
   def trailing(curr):
@@ -113,7 +124,7 @@ class Game:
       res += '\n '+ '|' 
       for j in range(len(Game.map)):
         temp =""
-        if Game.map[i][j]==5: temp= colored("██",'green')
+        if Game.map[i][j]==5 or  Game.map[i][j]==8 : temp= colored("██",'green')
         if Game.map[i][j]==0 : temp = "██"
         
         res +=temp
@@ -212,7 +223,8 @@ class Node:
   stop = False
   count = 1
   gameGoal: list = Game.goal
-  def __init__(self, depth, curr, goal,parrent) -> None:
+  speed = 0.5
+  def __init__(self, depth, curr,parrent) -> None:
     self.parrent = parrent
     self.win = False
     Node.count+=1
@@ -222,24 +234,36 @@ class Node:
     self.depth: int = depth
     self.next: list = []
     self.curr: list = curr
-    self.goal: list = goal
-  
+    self.fitness = self.fitnessCal(Game.goal)
+
+  def antiDetour(self,curr)->bool:
+    if self.parrent is None: return True
+    if self.parrent.curr == curr: return False
+    return self.parrent.antiDetour(curr)
+
+  def fitnessCal(self,goal)->int:
+    fitness = 0
+    if Game.map[self.curr[0]][self.curr[1]] == 5 or Game.map[self.curr[2]][self.curr[3]] == 5 or Game.map[self.curr[0]][self.curr[1]] == 8 or Game.map[self.curr[2]][self.curr[3]] == 8: return sys.maxsize
+    for i in range(4):
+      fitness += abs(self.curr[i]-goal[i%2])
+    return fitness
   def __str__(self) -> str:
     Game.curr = self.curr
     Game.loadcurr()
     _res=""
     tree = ""
-    for i in range(self.depth):
-      _res+="---"
-      tree +="   "
-    res=_res + "depth: "+  str(self.depth) +",idx: " + str(self.idx) + '\n'
-
+    # for i in range(self.depth):
+    #   _res+="---"
+    #   tree +="   "
+    res=_res + "depth: "+  str(self.depth) +", id: " + str(self.idx) + ", p_id: " + str(self.parrent.idx if self.parrent is not None else "root") + '\n' 
+    res+= _res + "curr: "+ str(self.curr) + ", goal: " + str(Game.goal) + ", fitness: " + str(self.fitness) + '\n'
     for i in range(len(Game.map)):
       # res +=tree
       res += '\n '+ tree+'|' 
       for j in range(len(Game.map)):
         temp =colored("██",'grey')
         if Game.map[i][j]==5: temp= colored("██",'green')
+        if Game.map[i][j]==8: temp= colored("██",'green')
         if Game.map[i][j]==0 : temp = "██"
         
         
@@ -256,22 +280,23 @@ class Node:
     return res
 
   def proceed(self):
-    self.trailing()
+    # self.trailing()
+    
+    time.sleep(Node.speed)
+    clear()
     res = ""
-    for i in self.curr:
-      if i>1 and i <=Game.n: continue
-      else:
-        self.lost = True
-        
-        res+= self.__str__()
-        Game.detrailing()
-        return res
+    
+    if Game.map[self.curr[0]][self.curr[1]] == 5 or Game.map[self.curr[2]][self.curr[3]] == 5 or Game.map[self.curr[0]][self.curr[1]] == 8 or Game.map[self.curr[2]][self.curr[3]] == 8: 
+      self.lost = True
+      res+= self.__str__()
+      Game.bordering()
+      return res
 
 
     if Node.stop: 
       res+= self.__str__()
       return res
-    if self.curr[0:2] == self.curr[2:4] and self.curr[0:2]==self.goal:
+    if self.curr[0:2] == self.curr[2:4] and self.curr[0:2]==Game.goal:
       Node.stop = True
       self.win = True
       res+= self.__str__()
@@ -287,8 +312,8 @@ class Node:
     else:
       curr[1]-=1
       curr[3]-=1    
-    if self.parrent is None or self.parrent.curr != curr:
-      a = Node(self.depth+1,curr,self.goal,self)
+    if self.antiDetour(curr):
+      a = Node(self.depth+1,curr,self)
       self.next +=[a]
 
     curr = copy.deepcopy(self.curr)
@@ -301,8 +326,8 @@ class Node:
     else:
       curr[1]+=1
       curr[3]+=1    
-    if self.parrent is None or self.parrent.curr != curr:
-      a = Node(self.depth+1,curr,self.goal,self)
+    if self.antiDetour(curr):
+      a = Node(self.depth+1,curr,self)
       self.next +=[a]
 
     curr = copy.deepcopy(self.curr)
@@ -315,8 +340,8 @@ class Node:
     else:
       curr[0]-=1
       curr[2]-=1  
-    if self.parrent is None or self.parrent.curr != curr:
-      a = Node(self.depth+1,curr,self.goal,self)
+    if self.antiDetour(curr):
+      a = Node(self.depth+1,curr,self)
       self.next +=[a]
 
     curr = copy.deepcopy(self.curr)
@@ -329,8 +354,8 @@ class Node:
     else:
       curr[0]+=1
       curr[2]+=1
-    if self.parrent is None or self.parrent.curr != curr:
-      a = Node(self.depth+1,curr,self.goal,self)
+    if self.antiDetour(curr):
+      a = Node(self.depth+1,curr,self)
       self.next +=[a]
     res+= self.__str__()
     
@@ -338,7 +363,7 @@ class Node:
     Game.trailing(self.curr)
     if self.parrent is not None: self.parrent.trailing()
 
-  def cascade(self,depth):
+  def dfs(self,depth):
     res =""
     if Node.stop: return
     
@@ -347,9 +372,26 @@ class Node:
     if self.lost: return
     for i in self.next:
       if Node.stop: return
-      i.cascade(depth)
+      i.dfs(depth)
 
-  def cascade_random(self,depth):
+  def geneticAlg(self):
+    res =""
+    if Node.stop: return
+    
+    self.proceed()
+    if self.lost: return
+    ar = []
+    idx = []
+    for i in self.next:
+      if Node.stop: return
+      if i.fitness < sys.maxsize: ar += [i.fitness]
+      idx += [i.fitness]
+    ar.sort()
+    for i in ar:
+      self.next[idx.index(i)].geneticAlg()
+      idx.remove(i)
+
+  def dfs_random(self,depth):
     res =""
     if Node.stop: return
     if self.depth > depth: return
@@ -360,7 +402,7 @@ class Node:
       if Node.stop: return
       x = random.choice(ar)
       ar.remove(x)
-      self.next[x].cascade_random(depth)
+      self.next[x].dfs_random(depth)
     return res
 
 
@@ -375,12 +417,28 @@ def main():
   # curr[0]=random.randint(0,n-1)
   # curr[1]=random.randint(0,m-1)
   # curr[2]=curr[0]
-  game =  Game(5,5)
+  game =  Game(24,24)
   game.initgame()
   # game.play()
-  print("awsd to move e to end, r to reset, dont kill urself, thx")
-  root = Node(0,Game.curr,Game.goal, None)
-  root.cascade(6)
+  # print("awsd to move e to end, r to reset, dont kill urself, thx")
+  
+  
+  Game.map[Game.goal[0]][Game.goal[1]]=0
+  Game.map[Game.curr[0]][Game.curr[1]]=0
+  Game.map[Game.curr[2]][Game.curr[3]]=0
+  Game.goal = [2,2]
+  Game.map[Game.goal[0]][Game.goal[1]]=1
+  Game.curr = [3,4,3,4]
+  # Game.verticalObstacle(2,8,6)
+  # Game.verticalObstacle(5,11,9)
+  # Game.verticalObstacle(16,20,15)
+  # Game.HorizontalObstacle(2,8,9)
+  # Game.HorizontalObstacle(6,14,12)
+  # Game.HorizontalObstacle(16,23,16)
+  root = Node(0,Game.curr, None)
+  # root.dfs(6)
+  Node.speed = 0.2
+  root.geneticAlg()
 
 
 if __name__ == '__main__':
