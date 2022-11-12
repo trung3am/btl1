@@ -1,5 +1,6 @@
 # btl1
 install module for run on cli:
+
 pip install termcolor
 
 pip install colorama
