@@ -437,6 +437,7 @@ def heuritiscalCal()->int:
   return heuritiscal
 
 class Individual:
+  mutationThreshold = 10
   genetic = ["w","s","a","d"]
   estimateStepIThink = 23
   maxPop = 50
@@ -476,12 +477,13 @@ class Individual:
     return self.fitness > other.fitness
 
   def mate(par1, par2):
+    
     res = ""
     for i in range(len(par1.chromosome)):
       x = random.random()
-      if x < .45: res+= par1.chromosome[i]
-      elif x > .45 and x <.9: res+= par2.chromosome[i]
-      elif x > .9: res+= Individual.createMutation()
+      if x < (1-Individual.mutationThreshold/100)/2: res+= par1.chromosome[i]
+      elif x > (1-Individual.mutationThreshold/100)/2 and x <.9: res+= par2.chromosome[i]
+      elif x > (1-Individual.mutationThreshold/100): res+= Individual.createMutation()
       
     return res
   
@@ -533,40 +535,39 @@ def initPopulation(population):
     a = Individual(Individual.createChromosome())
     population += [a]
 
-def main():
-  # this for dfs only
-  # game =  Game(9,9)
-
-  # game.play()
-  # print("awsd to move e to end, r to reset, dont kill urself, thx")
-  
-  
-
-
-  # this for dfs only
-  # Game.goal = [7,7]
-
-
-
-  game =  Game(24,24)
+def testcasedfs():
+  game =  Game(12,12)
   game.initgame()
   Game.map[Game.goal[0]][Game.goal[1]]=0
   Game.map[Game.curr[0]][Game.curr[1]]=0
   Game.map[Game.curr[2]][Game.curr[3]]=0
-
-  # test case 1
-  # Game.curr = [3,4,3,4]
-  # Game.startCurr = copy.deepcopy(Game.curr)
-  # Game.goal = [21,21]
-  # Game.map[Game.goal[0]][Game.goal[1]]=1
-
-  # Game.recObstacle(False,8,25,2,5)
-  # Game.recObstacle(True,13,25,2,8)
-  # Game.recObstacle(True,13,25,10,5)
-  # Game.recObstacle(True,16,25,15,3)
-
-# test case 2
   Game.curr = [3,4,3,4]
+  Game.goal = [7,7]
+  Game.startCurr = copy.deepcopy(Game.curr)
+
+def testcase1():
+  game = Game(24,24)
+  game.initgame()
+  Game.map[Game.goal[0]][Game.goal[1]]=0
+  Game.map[Game.curr[0]][Game.curr[1]]=0
+  Game.map[Game.curr[2]][Game.curr[3]]=0
+  Game.curr = [3,4,3,4]
+  Game.startCurr = copy.deepcopy(Game.curr)
+  Game.goal = [21,21]
+  Game.map[Game.goal[0]][Game.goal[1]]=1
+
+  Game.recObstacle(False,8,25,2,5)
+  Game.recObstacle(True,13,25,2,8)
+  Game.recObstacle(True,13,25,10,5)
+  Game.recObstacle(True,16,25,15,3)
+
+def testcase2():
+  game = Game(24,24)
+  game.initgame()
+  Game.map[Game.goal[0]][Game.goal[1]]=0
+  Game.map[Game.curr[0]][Game.curr[1]]=0
+  Game.map[Game.curr[2]][Game.curr[3]]=0
+  Game.curr = [6,4,6,4]
   Game.startCurr = copy.deepcopy(Game.curr)
   Game.goal = [21,21]
   Game.map[Game.goal[0]][Game.goal[1]]=1
@@ -574,36 +575,79 @@ def main():
   Game.recObstacle(False,8,18,4,6)
   Game.recObstacle(False,2,18,7,18)
 
-# test case 3 cannot be solved by genetic
-  # Game.curr = [3,4,3,4]
-  # Game.startCurr = copy.deepcopy(Game.curr)
-  # Game.goal = [3,21]
-  # Game.map[Game.goal[0]][Game.goal[1]]=1
+def testcase3():
+  # test case 3 cannot be solved by genetic
+  print("this test case cannot be solved by genetic, will commence after 2s")
+  time.sleep(2)
+  game = Game(24,24)
+  game.initgame()
+  Game.map[Game.goal[0]][Game.goal[1]]=0
+  Game.map[Game.curr[0]][Game.curr[1]]=0
+  Game.map[Game.curr[2]][Game.curr[3]]=0
+  Game.curr = [3,4,3,4]
+  Game.startCurr = copy.deepcopy(Game.curr)
+  Game.goal = [3,21]
+  Game.map[Game.goal[0]][Game.goal[1]]=1
 
-  # Game.recObstacle(False,8,18,2,19)
-  # Game.recObstacle(False,8,18,22,3)
+  Game.recObstacle(False,8,18,2,19)
+  Game.recObstacle(False,8,18,22,3)
 
-
-
-
-  Node.speed = .0
-  # root.greedy()
-
-  #genetic Algorithm
-  Individual.estimateStepIThink = 50
+def runGen():
+  Node.speed = 0.0
+  Individual.estimateStepIThink = 40
   Individual.maxPop = 20
+  Individual.mutationThreshold = 20
   population = []
   initPopulation(population)
   print(len(population))
+  gen = time.time()
   geneticAlgorithm(population)
+  gen = time.time() - gen
+  return gen
+def runDfs():
+  Node.speed = 0.0
+  Game.curr = Game.startCurr
+  root = Node(0,Game.curr, None,"")
+  print(root)
+  dfs = time.time()
+  root.dfs(30)
+  dfs =time.time() - dfs
+  return dfs
+ 
+def runBoth(gen, dfs):
+   print("genetic time: " + str(gen) + " dfs time: " + str(dfs))
 
-  # dfs
-  # Node.speed = 0.0
-  # root = Node(0,Game.curr, None,"")
-  # print(root)
-  # root.dfs(6)
+def main():
 
-
+  while(True):
+    print("please choose testcase, press e for testcase dfs, and 1,2,3 for test case genetic")
+    t = input()
+    if t == "e":
+      testcasedfs()
+      break
+    if t == "1":
+      testcase1()
+      break
+    if t == "2":
+      testcase2()
+      break
+    if t == "3":
+      testcase3()
+      break
+    print("invalid input")
+  while(True):
+    print("press d to run dfs, g to run genetic algorithm, b to run both")
+    x = input()
+    if x == "d":
+      print(str(runDfs()))
+      break
+    if x == "g":
+      print(str(runGen()))
+      break
+    if x == "b":
+      runBoth(runGen(),runDfs())
+      break
+    print("invalid input")
 
 
 

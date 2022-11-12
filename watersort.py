@@ -275,29 +275,37 @@ def takeInput():
   Node.speed = s
   return makeBottle(x,y,z,t)
   
+def testcase():
+# testcase 5 filled bottles 5 different colours, filled to 4/6 capacity and 1 unfilled bottle
+  while(True):
+    print("please input test case 1,2,3,4,5")
+    i = input()
+    if i == "1":
+      return makeBottle(5,5,4,1)
 
+# testcase 4 filled bottles 3 different colours, filled to 4/6 capacity and 1 unfilled bottle
+    if i == "2":
+      return makeBottle(4,3,4,1)
+
+# testcase 3 filled bottles 3 different colours, filled to 4/6 capacity and 1 unfilled bottle
+    if i == "3":
+      return makeBottle(3,3,4,1)
+
+# testcase 5 filled bottles 5 different colours, filled to 4/6 capacity and 2 unfilled bottle
+    if i == "4":
+      return makeBottle(5,5,4,2)
+
+# testcase 7 filled bottles 6 different colours, filled to 4/6 capacity and 2 unfilled bottle
+    if i == "5":
+      return makeBottle(7,6,4,2)
+    if i == "6":
+      return  [['RED', 'BLUE', 'YELLOW', 'RED'], ['BLUE', 'YELLOW', 'RED', 'BLUE'], ['WHITE', 'MAGENTA', 'YELLOW', 'YELLOW'], ['RED', 'BLUE', 'RED', 'GREEN'], ['MAGENTA', 'MAGENTA', 'BLUE', 'MAGENTA'], ['MAGENTA', 'WHITE', 'GREEN', 'YELLOW'], ['WHITE', 'GREEN', 'WHITE', 'GREEN'], [], []]
+    print("invalid input")
 def main():
   Node.speed = 0
-  # take input - if needed
-  # bottle = takeInput()
-  
-  # testcase 5 filled bottles 5 different colours, filled to 4/6 capacity and 1 unfilled bottle
-  bottle = makeBottle(5,5,4,1)
 
-  # testcase 4 filled bottles 3 different colours, filled to 4/6 capacity and 1 unfilled bottle
-  # bottle = makeBottle(4,3,4,1)
+  bottle = testcase()
 
-  # testcase 3 filled bottles 3 different colours, filled to 4/6 capacity and 1 unfilled bottle
-  # bottle = makeBottle(3,3,4,1)
-
-  # testcase 5 filled bottles 5 different colours, filled to 4/6 capacity and 2 unfilled bottle
-  # bottle = makeBottle(5,5,4,2)
-
-  # testcase 7 filled bottles 6 different colours, filled to 4/6 capacity and 2 unfilled bottle
-  # bottle = makeBottle(7,6,4,2)
-  
-  # some good case 
-  # bottle = [['RED', 'BLUE', 'YELLOW', 'RED'], ['BLUE', 'YELLOW', 'RED', 'BLUE'], ['WHITE', 'MAGENTA', 'YELLOW', 'YELLOW'], ['RED', 'BLUE', 'RED', 'GREEN'], ['MAGENTA', 'MAGENTA', 'BLUE', 'MAGENTA'], ['MAGENTA', 'WHITE', 'GREEN', 'YELLOW'], ['WHITE', 'GREEN', 'WHITE', 'GREEN'], [], []]
 
   bDfs = copy.deepcopy(bottle)
   bAstar = copy.deepcopy(bottle)
@@ -306,15 +314,29 @@ def main():
   rootAstar = Node(bAstar,0,None,"start")
   clear()
   print(bottle)
-  AstarTime = time.time()
-  rootAstar.AStar()
-  AstarTime = time.time() - AstarTime
-  print("ASTAR DONE ----------------------------------------------------------------------------------------------------------" + "\n Astar time: " + str(AstarTime) + " Node created: " + str(rootAstar.node_count()))
-  Node.stop = False
-  DFSTime = time.time()
-  rootDFS.dfs(50)
-  DFSTime = time.time() - DFSTime
-  print("DFS DONE ----------------------------------------------------------------------------------------------------------" + "\n DFS time: " + str(DFSTime) + " Node created: " + str(rootDFS.node_count()))
-  print("\n Astar time: " + str(AstarTime) + " Node created: " + str(rootAstar.node_count()) + "| DFS time: " + str(DFSTime) + " Node created: " + str(rootDFS.node_count()))
+  print("press a for astar, d for dfs, else for both")
+  x = input()
+  if x =="a":
+    AstarTime = time.time()
+    rootAstar.AStar()
+    AstarTime = time.time() - AstarTime
+    print("ASTAR DONE ----------------------------------------------------------------------------------------------------------" + "\n Astar time: " + str(AstarTime) + "s Node traversed: " + str(rootAstar.node_count()))
+  elif x == "d":
+    Node.stop = False
+    DFSTime = time.time()
+    rootDFS.dfs(50)
+    DFSTime = time.time() - DFSTime
+    print("DFS DONE ----------------------------------------------------------------------------------------------------------" + "\n DFS time: " + str(DFSTime) + "s Node traversed: " + str(rootDFS.node_count()))
+  else:
+    AstarTime = time.time()
+    rootAstar.AStar()
+    AstarTime = time.time() - AstarTime
+    print("ASTAR DONE ----------------------------------------------------------------------------------------------------------" + "\n Astar time: " + str(AstarTime) + "s Node traversed: " + str(rootAstar.node_count()))
+    Node.stop = False
+    DFSTime = time.time()
+    rootDFS.dfs(50)
+    DFSTime = time.time() - DFSTime
+    print("DFS DONE ----------------------------------------------------------------------------------------------------------" + "\n DFS time: " + str(DFSTime) + "s Node traversed: " + str(rootDFS.node_count()))
+    print("\n Astar time: " + str(AstarTime) + "s Node traversed: " + str(rootAstar.node_count()) + "| DFS time: " + str(DFSTime) + "s Node traversed: " + str(rootDFS.node_count()))
 if __name__ == '__main__':
     main()
